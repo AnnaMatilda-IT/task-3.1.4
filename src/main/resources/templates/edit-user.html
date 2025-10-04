@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Edit User</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 0; padding: 20px; background: #f5f5f5; }
+        .container { max-width: 600px; margin: 0 auto; background: white; padding: 30px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+        .header { border-bottom: 2px solid #ffc107; padding-bottom: 15px; margin-bottom: 25px; }
+        .form-group { margin-bottom: 20px; }
+        label { display: block; margin-bottom: 5px; font-weight: bold; color: #555; }
+        input[type="text"], input[type="email"], input[type="password"], input[type="number"], select {
+            width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 4px; box-sizing: border-box; font-size: 14px;
+        }
+        input:focus, select:focus { border-color: #007bff; outline: none; box-shadow: 0 0 5px rgba(0,123,255,0.3); }
+        .btn { display: inline-block; padding: 10px 20px; margin: 5px; background: #007bff; color: white;
+            text-decoration: none; border-radius: 4px; border: none; cursor: pointer; font-size: 14px; }
+        .btn:hover { background: #0056b3; }
+        .btn-warning { background: #ffc107; color: #212529; }
+        .btn-warning:hover { background: #e0a800; }
+        .btn-secondary { background: #6c757d; }
+        .btn-secondary:hover { background: #545b62; }
+        .checkbox-group { display: flex; flex-wrap: wrap; gap: 15px; margin-top: 10px; }
+        .checkbox-item { display: flex; align-items: center; }
+        .checkbox-item input { margin-right: 8px; }
+        .form-actions { margin-top: 30px; padding-top: 20px; border-top: 1px solid #eee; text-align: center; }
+        .required:after { content: " *"; color: #dc3545; }
+        .help-text { font-size: 12px; color: #6c757d; margin-top: 5px; }
+        .current-roles { background: #e9ecef; padding: 10px; border-radius: 4px; margin-top: 10px; }
+        .role-badge { display: inline-block; padding: 3px 8px; background: #17a2b8; color: white;
+            border-radius: 12px; font-size: 11px; margin-right: 5px; }
+    </style>
+</head>
+<body>
+<div class="container">
+    <div class="header">
+        <h1 style="margin: 0; color: #ffc107;">Edit User</h1>
+        <p style="margin: 5px 0 0 0; color: #666;">Update user information</p>
+    </div>
+
+    <form th:action="@{/admin/edit}" method="post" th:object="${user}">
+        <input type="hidden" th:field="*{id}">
+
+        <div class="form-group">
+            <label for="username" class="required">Username:</label>
+            <input type="text" id="username" th:field="*{username}" required
+                   placeholder="Enter unique username">
+            <div class="help-text">Username must be unique and is used for login</div>
+        </div>
+
+        <div class="form-group">
+            <label for="password">Password:</label>
+            <input type="password" id="password" th:field="*{password}"
+                   placeholder="Leave blank to keep current password">
+            <div class="help-text">Enter new password only if you want to change it</div>
+        </div>
+
+        <div class="form-group">
+            <label for="firstName" class="required">First Name:</label>
+            <input type="text" id="firstName" th:field="*{firstName}" required
+                   placeholder="Enter first name">
+        </div>
+
+        <div class="form-group">
+            <label for="lastName" class="required">Last Name:</label>
+            <input type="text" id="lastName" th:field="*{lastName}" required
+                   placeholder="Enter last name">
+        </div>
+
+        <div class="form-group">
+            <label for="email" class="required">Email:</label>
+            <input type="email" id="email" th:field="*{email}" required
+                   placeholder="Enter email address">
+            <div class="help-text">Email must be unique</div>
+        </div>
+
+        <div class="form-group">
+            <label for="age">Age:</label>
+            <input type="number" id="age" th:field="*{age}" min="1" max="120"
+                   placeholder="Enter age (optional)">
+        </div>
+
+        <div class="form-group">
+            <label>Roles:</label>
+            <div class="current-roles" th:if="${user.roles}">
+                <strong>Current Roles:</strong>
+                <span th:each="role : ${user.roles}" class="role-badge" th:text="${role.name}">ROLE</span>
+            </div>
+            <div class="checkbox-group">
+                <div th:each="role : ${allRoles}" class="checkbox-item">
+                    <input type="checkbox" th:id="${'role_' + role.id}" th:value="${role.id}"
+                           th:name="roles" th:checked="${#lists.contains(user.roles, role)}">
+                    <label th:for="${'role_' + role.id}" th:text="${role.name}">ROLE</label>
+                </div>
+            </div>
+            <div class="help-text">Select roles for the user</div>
+        </div>
+
+        <div class="form-actions">
+            <button type="submit" class="btn btn-warning">Update User</button>
+            <a th:href="@{/admin}" class="btn btn-secondary">Cancel</a>
+        </div>
+    </form>
+
+    <div style="margin-top: 30px; padding: 15px; background: #fff3cd; border: 1px solid #ffeaa7; border-radius: 4px;">
+        <h4 style="margin-top: 0; color: #856404;">Important Notes:</h4>
+        <ul style="margin-bottom: 0; color: #856404;">
+            <li>Password field: Leave blank to keep the current password</li>
+            <li>Username and email must remain unique across all users</li>
+            <li>Removing all roles will prevent user from logging in</li>
+        </ul>
+    </div>
+</div>
+</body>
+</html>

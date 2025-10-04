@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="https://www.thymeleaf.org/thymeleaf-extras-springsecurity5">
+<head>
+    <meta charset="UTF-8">
+    <title>Admin Panel</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 0; padding: 20px; background: #f5f5f5; }
+        .container { max-width: 1200px; margin: 0 auto; }
+        .header { background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); margin-bottom: 20px; }
+        .user-info { background: #e9ecef; padding: 15px; border-radius: 6px; margin-bottom: 20px; }
+        .btn { display: inline-block; padding: 8px 16px; margin: 5px; background: #007bff; color: white;
+            text-decoration: none; border-radius: 4px; border: none; cursor: pointer; font-size: 14px; }
+        .btn:hover { background: #0056b3; }
+        .btn-success { background: #28a745; }
+        .btn-success:hover { background: #218838; }
+        .btn-danger { background: #dc3545; }
+        .btn-danger:hover { background: #c82333; }
+        .btn-warning { background: #ffc107; color: #212529; }
+        .btn-warning:hover { background: #e0a800; }
+        table { width: 100%; border-collapse: collapse; background: white; box-shadow: 0 2px 10px rgba(0,0,0,0.1); border-radius: 8px; overflow: hidden; }
+        th, td { padding: 12px 15px; text-align: left; border-bottom: 1px solid #ddd; }
+        th { background: #007bff; color: white; font-weight: bold; }
+        tr:hover { background: #f8f9fa; }
+        .actions { white-space: nowrap; }
+        .role-badge { display: inline-block; padding: 3px 8px; background: #17a2b8; color: white;
+            border-radius: 12px; font-size: 11px; margin-right: 3px; }
+        .alert { padding: 12px; margin-bottom: 20px; border-radius: 4px; }
+        .alert-success { background: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
+        .alert-error { background: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
+        .nav { margin-bottom: 20px; }
+    </style>
+</head>
+<body>
+<div class="container">
+    <div class="header">
+        <h1 style="margin: 0; color: #007bff;">Admin Panel</h1>
+        <p style="margin: 5px 0 0 0; color: #666;">User Management System</p>
+    </div>
+
+    <div class="user-info">
+        <div style="display: flex; justify-content: space-between; align-items: center;">
+            <div>
+                <strong>Logged as:</strong> <span sec:authentication="name"></span> |
+                <strong>Roles:</strong> <span sec:authentication="principal.authorities"></span>
+            </div>
+            <div>
+                <a th:href="@{/user}" class="btn">My Profile</a>
+                <a th:href="@{/}" class="btn">Home</a>
+                <form th:action="@{/logout}" method="post" style="display: inline;">
+                    <button type="submit" class="btn btn-danger">Logout</button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <div th:if="${param.success}" class="alert alert-success">
+        User operation completed successfully!
+    </div>
+
+    <div th:if="${param.error}" class="alert alert-error">
+        Error: <span th:text="${param.error}"></span>
+    </div>
+
+    <div class="nav">
+        <a th:href="@{/admin/add}" class="btn btn-success">+ Add New User</a>
+        <span style="margin-left: 15px; font-weight: bold;">
+                Total Users: <span th:text="${#lists.size(users)}">0</span>
+            </span>
+    </div>
+
+    <table>
+        <thead>
+        <tr>
+            <th>ID</th>
+            <th>Username</th>
+            <th>First Name</th>
+            <th>Last Name</th>
+            <th>Email</th>
+            <th>Age</th>
+            <th>Roles</th>
+            <th class="actions">Actions</th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr th:each="user : ${users}">
+            <td th:text="${user.id}"></td>
+            <td th:text="${user.username}"></td>
+            <td th:text="${user.firstName}"></td>
+            <td th:text="${user.lastName}"></td>
+            <td th:text="${user.email}"></td>
+            <td th:text="${user.age} ?: '-'"></td>
+            <td>
+                <span th:each="role : ${user.roles}" class="role-badge" th:text="${role.name}">ROLE</span>
+            </td>
+            <td class="actions">
+                <a th:href="@{/admin/edit/{id}(id=${user.id})}" class="btn btn-warning">Edit</a>
+                <form th:action="@{/admin/delete/{id}(id=${user.id})}" method="post" style="display: inline;">
+                    <button type="submit" class="btn btn-danger"
+                            onclick="return confirm('Are you sure you want to delete user \'' + [[${user.username}]] + '\'?')">
+                        Delete
+                    </button>
+                </form>
+            </td>
+        </tr>
+        <tr th:if="${#lists.isEmpty(users)}">
+            <td colspan="8" style="text-align: center; padding: 30px; color: #666;">
+                No users found. <a th:href="@{/admin/add}">Add the first user</a>
+            </td>
+        </tr>
+        </tbody>
+    </table>
+
+    <div style="margin-top: 30px; padding: 20px; background: white; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1);">
+        <h3 style="color: #007bff; margin-top: 0;">Admin Guide</h3>
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px;">
+            <div>
+                <h4>User Management</h4>
+                <ul>
+                    <li>Add new users with the "Add New User" button</li>
+                    <li>Edit existing users with the "Edit" button</li>
+                    <li>Delete users with the "Delete" button</li>
+                    <li>Assign roles to control access permissions</li>
+                </ul>
+            </div>
+            <div>
+                <h4>Role Permissions</h4>
+                <ul>
+                    <li><strong>ADMIN</strong> - Full access to all features</li>
+                    <li><strong>USER</strong> - Access to personal profile only</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Auto-hide alerts after 5 seconds
+    setTimeout(function() {
+        var alerts = document.querySelectorAll('.alert');
+        alerts.forEach(function(alert) {
+            alert.style.opacity = '0';
+            alert.style.transition = 'opacity 0.5s';
+            setTimeout(function() {
+                alert.style.display = 'none';
+            }, 500);
+        });
+    }, 5000);
+</script>
+</body>
+</html>

@@ -1,11 +1,61 @@
 <!DOCTYPE html>
-<html xmlns="http://www.w3.org/1999/xhtml" xmlns:th="https://www.thymeleaf.org" xmlns:sec="https://www.thymeleaf.org/thymeleaf-extras-springsecurity3">
+<html xmlns="http://www.w3.org/1999/xhtml" xmlns:th="https://www.thymeleaf.org"
+      xmlns:sec="https://www.thymeleaf.org/thymeleaf-extras-springsecurity5">
 <head>
+    <meta charset="UTF-8">
     <title>Spring Security Example</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 40px; }
+        .container { max-width: 800px; margin: 0 auto; }
+        .nav { margin: 20px 0; padding: 10px; background: #f5f5f5; border-radius: 5px; }
+        .btn { display: inline-block; padding: 8px 16px; margin: 5px; background: #007bff; color: white;
+            text-decoration: none; border-radius: 4px; border: none; cursor: pointer; }
+        .btn:hover { background: #0056b3; }
+        .info-box { background: #e9f7ef; padding: 15px; border-radius: 5px; margin: 15px 0; }
+    </style>
 </head>
 <body>
-<h1>Welcome to Index PAGE!</h1>
+<div class="container">
+    <h1>Welcome to Spring Boot Security Application!</h1>
 
+    <div sec:authorize="isAnonymous()">
+        <div class="info-box">
+            <h3>You are not logged in</h3>
+            <p>Please log in to access the application features.</p>
+            <a th:href="@{/login}" class="btn">Login</a>
+        </div>
+    </div>
 
+    <div sec:authorize="isAuthenticated()">
+        <div class="info-box">
+            <h3>Welcome, <span sec:authentication="name"></span>!</h3>
+            <p><strong>Roles:</strong> <span sec:authentication="principal.authorities"></span></p>
+
+            <div class="nav">
+                <div sec:authorize="hasRole('ADMIN')">
+                    <a th:href="@{/admin}" class="btn">Admin Panel</a>
+                </div>
+                <div sec:authorize="hasAnyRole('USER', 'ADMIN')">
+                    <a th:href="@{/user}" class="btn">User Panel</a>
+                </div>
+
+                <form th:action="@{/logout}" method="post" style="display: inline;">
+                    <button type="submit" class="btn" style="background: #dc3545;">Logout</button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <div class="info-box">
+        <h3>About this application:</h3>
+        <p>This is a Spring Boot application with Spring Security integration that demonstrates:</p>
+        <ul>
+            <li>User authentication and authorization</li>
+            <li>Role-based access control (ADMIN and USER roles)</li>
+            <li>CRUD operations for user management</li>
+            <li>Secure logout functionality</li>
+        </ul>
+    </div>
+</div>
 </body>
 </html>

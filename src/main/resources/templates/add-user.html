@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Add New User</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 0; padding: 20px; background: #f5f5f5; }
+        .container { max-width: 600px; margin: 0 auto; background: white; padding: 30px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+        .header { border-bottom: 2px solid #28a745; padding-bottom: 15px; margin-bottom: 25px; }
+        .form-group { margin-bottom: 20px; }
+        label { display: block; margin-bottom: 5px; font-weight: bold; color: #555; }
+        input[type="text"], input[type="email"], input[type="password"], input[type="number"], select {
+            width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 4px; box-sizing: border-box; font-size: 14px;
+        }
+        input:focus, select:focus { border-color: #007bff; outline: none; box-shadow: 0 0 5px rgba(0,123,255,0.3); }
+        .btn { display: inline-block; padding: 10px 20px; margin: 5px; background: #007bff; color: white;
+            text-decoration: none; border-radius: 4px; border: none; cursor: pointer; font-size: 14px; }
+        .btn:hover { background: #0056b3; }
+        .btn-success { background: #28a745; }
+        .btn-success:hover { background: #218838; }
+        .btn-secondary { background: #6c757d; }
+        .btn-secondary:hover { background: #545b62; }
+        .checkbox-group { display: flex; flex-wrap: wrap; gap: 15px; margin-top: 10px; }
+        .checkbox-item { display: flex; align-items: center; }
+        .checkbox-item input { margin-right: 8px; }
+        .form-actions { margin-top: 30px; padding-top: 20px; border-top: 1px solid #eee; text-align: center; }
+        .required:after { content: " *"; color: #dc3545; }
+        .help-text { font-size: 12px; color: #6c757d; margin-top: 5px; }
+    </style>
+</head>
+<body>
+<div class="container">
+    <div class="header">
+        <h1 style="margin: 0; color: #28a745;">Add New User</h1>
+        <p style="margin: 5px 0 0 0; color: #666;">Create a new user account</p>
+    </div>
+
+    <form th:action="@{/admin/add}" method="post" th:object="${user}">
+        <div class="form-group">
+            <label for="username" class="required">Username:</label>
+            <input type="text" id="username" th:field="*{username}" required
+                   placeholder="Enter unique username">
+            <div class="help-text">Username must be unique and will be used for login</div>
+        </div>
+
+        <div class="form-group">
+            <label for="password" class="required">Password:</label>
+            <input type="password" id="password" th:field="*{password}" required
+                   placeholder="Enter password">
+            <div class="help-text">Password will be encrypted for security</div>
+        </div>
+
+        <div class="form-group">
+            <label for="firstName" class="required">First Name:</label>
+            <input type="text" id="firstName" th:field="*{firstName}" required
+                   placeholder="Enter first name">
+        </div>
+
+        <div class="form-group">
+            <label for="lastName" class="required">Last Name:</label>
+            <input type="text" id="lastName" th:field="*{lastName}" required
+                   placeholder="Enter last name">
+        </div>
+
+        <div class="form-group">
+            <label for="email" class="required">Email:</label>
+            <input type="email" id="email" th:field="*{email}" required
+                   placeholder="Enter email address">
+            <div class="help-text">Email must be unique</div>
+        </div>
+
+        <div class="form-group">
+            <label for="age">Age:</label>
+            <input type="number" id="age" th:field="*{age}" min="1" max="120"
+                   placeholder="Enter age (optional)">
+        </div>
+
+        <div class="form-group">
+            <label>Roles:</label>
+            <div class="checkbox-group">
+                <div th:each="role : ${allRoles}" class="checkbox-item">
+                    <input type="checkbox" th:id="${'role_' + role.id}" th:value="${role.id}"
+                           th:name="roles" th:checked="${role.name == 'ROLE_USER'}">
+                    <label th:for="${'role_' + role.id}" th:text="${role.name}">ROLE</label>
+                </div>
+            </div>
+            <div class="help-text">Select at least one role for the user</div>
+        </div>
+
+        <div class="form-actions">
+            <button type="submit" class="btn btn-success">Create User</button>
+            <a th:href="@{/admin}" class="btn btn-secondary">Cancel</a>
+        </div>
+    </form>
+
+    <div style="margin-top: 30px; padding: 15px; background: #f8f9fa; border-radius: 4px;">
+        <h4 style="margin-top: 0;">About User Roles:</h4>
+        <ul style="margin-bottom: 0;">
+            <li><strong>ROLE_ADMIN</strong> - Full access to admin panel and user management</li>
+            <li><strong>ROLE_USER</strong> - Access to personal profile page only</li>
+        </ul>
+    </div>
+</div>
+</body>
+</html>

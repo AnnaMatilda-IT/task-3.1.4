@@ -1,11 +1,102 @@
 <!DOCTYPE html>
-<html xmlns="http://www.w3.org/1999/xhtml" xmlns:th="https://www.thymeleaf.org" xmlns:sec="https://www.thymeleaf.org/thymeleaf-extras-springsecurity3">
+<html xmlns="http://www.w3.org/1999/xhtml" xmlns:th="https://www.thymeleaf.org"
+      xmlns:sec="https://www.thymeleaf.org/thymeleaf-extras-springsecurity5">
 <head>
-    <title>Spring Security Example</title>
+    <meta charset="UTF-8">
+    <title>User Profile</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 0; padding: 20px; background: #f5f5f5; }
+        .container { max-width: 800px; margin: 0 auto; background: white; padding: 30px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+        .header { border-bottom: 2px solid #007bff; padding-bottom: 15px; margin-bottom: 25px; }
+        .user-info { background: #f8f9fa; padding: 20px; border-radius: 6px; margin-bottom: 25px; }
+        .info-row { display: flex; margin-bottom: 10px; padding: 8px 0; border-bottom: 1px solid #eee; }
+        .info-label { font-weight: bold; width: 150px; color: #555; }
+        .info-value { flex: 1; }
+        .btn { display: inline-block; padding: 8px 16px; margin: 5px; background: #007bff; color: white;
+            text-decoration: none; border-radius: 4px; border: none; cursor: pointer; }
+        .btn:hover { background: #0056b3; }
+        .btn-danger { background: #dc3545; }
+        .btn-danger:hover { background: #c82333; }
+        .nav { margin: 20px 0; padding: 15px; background: #e9ecef; border-radius: 5px; }
+        .role-badge { display: inline-block; padding: 3px 8px; background: #17a2b8; color: white;
+            border-radius: 12px; font-size: 12px; margin-right: 5px; }
+    </style>
 </head>
 <body>
-<h1>User, welcome spring boot security page!</h1>
+<div class="container">
+    <div class="header">
+        <h1>User Profile</h1>
+        <p>Welcome to your personal dashboard</p>
+    </div>
 
+    <div class="nav">
+        <span>Logged as: <strong><span sec:authentication="name"></span></strong></span>
+        <span style="margin-left: 20px;">Roles:
+                <span sec:authentication="principal.authorities"></span>
+            </span>
 
+        <div style="margin-top: 10px;">
+            <a th:href="@{/}" class="btn">Home</a>
+            <div sec:authorize="hasRole('ADMIN')" style="display: inline-block;">
+                <a th:href="@{/admin}" class="btn">Admin Panel</a>
+            </div>
+            <form th:action="@{/logout}" method="post" style="display: inline;">
+                <button type="submit" class="btn btn-danger">Logout</button>
+            </form>
+        </div>
+    </div>
+
+    <div class="user-info">
+        <h2 style="color: #007bff; margin-top: 0;">Your Information</h2>
+
+        <div th:if="${user}" class="info-grid">
+            <div class="info-row">
+                <div class="info-label">ID:</div>
+                <div class="info-value" th:text="${user.id}">-</div>
+            </div>
+            <div class="info-row">
+                <div class="info-label">Username:</div>
+                <div class="info-value" th:text="${user.username}">-</div>
+            </div>
+            <div class="info-row">
+                <div class="info-label">First Name:</div>
+                <div class="info-value" th:text="${user.firstName}">-</div>
+            </div>
+            <div class="info-row">
+                <div class="info-label">Last Name:</div>
+                <div class="info-value" th:text="${user.lastName}">-</div>
+            </div>
+            <div class="info-row">
+                <div class="info-label">Email:</div>
+                <div class="info-value" th:text="${user.email}">-</div>
+            </div>
+            <div class="info-row">
+                <div class="info-label">Age:</div>
+                <div class="info-value" th:text="${user.age} ?: 'Not specified'">-</div>
+            </div>
+            <div class="info-row">
+                <div class="info-label">Roles:</div>
+                <div class="info-value">
+                    <span th:each="role : ${user.roles}" class="role-badge" th:text="${role.name}">ROLE</span>
+                </div>
+            </div>
+        </div>
+
+        <div th:unless="${user}" class="alert" style="background: #fff3cd; color: #856404; padding: 15px; border-radius: 4px;">
+            User information not available.
+        </div>
+    </div>
+
+    <div style="background: #d1edff; padding: 15px; border-radius: 6px;">
+        <h3 style="margin-top: 0;">User Permissions</h3>
+        <p>As a <strong><span sec:authentication="principal.authorities"></span></strong>, you can:</p>
+        <ul>
+            <li sec:authorize="hasRole('USER')">View your personal profile information</li>
+            <li sec:authorize="hasRole('ADMIN')">Manage all users in the system</li>
+            <li sec:authorize="hasRole('ADMIN')">Create, edit, and delete user accounts</li>
+            <li sec:authorize="hasRole('ADMIN')">Assign roles to users</li>
+        </ul>
+    </div>
+</div>
 </body>
 </html>
