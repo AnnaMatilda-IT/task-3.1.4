@@ -26,6 +26,7 @@
         .form-actions { margin-top: 30px; padding-top: 20px; border-top: 1px solid #eee; text-align: center; }
         .required:after { content: " *"; color: #dc3545; }
         .help-text { font-size: 12px; color: #6c757d; margin-top: 5px; }
+        .error-message { color: #dc3545; font-size: 12px; margin-top: 5px; }
     </style>
 </head>
 <body>
@@ -35,56 +36,76 @@
         <p style="margin: 5px 0 0 0; color: #666;">Create a new user account</p>
     </div>
 
-    <form th:action="@{/admin/add}" method="post" th:object="${user}">
+    <!-- Отображение ошибок -->
+    <div th:if="${param.error}" class="alert alert-error" style="background: #f8d7da; color: #721c24; padding: 12px; border-radius: 4px; margin-bottom: 20px;">
+        <strong>Error:</strong> <span th:text="${param.error}"></span>
+    </div>
+
+    <form th:action="@{/admin/add}" method="post" th:object="${userDto}">
         <div class="form-group">
             <label for="username" class="required">Username:</label>
             <input type="text" id="username" th:field="*{username}" required
-                   placeholder="Enter unique username">
+                   placeholder="Enter unique username"
+                   th:class="${#fields.hasErrors('username')} ? 'field-error'">
             <div class="help-text">Username must be unique and will be used for login</div>
+            <div th:if="${#fields.hasErrors('username')}" class="error-message" th:errors="*{username}"></div>
         </div>
 
         <div class="form-group">
             <label for="password" class="required">Password:</label>
             <input type="password" id="password" th:field="*{password}" required
-                   placeholder="Enter password">
+                   placeholder="Enter password"
+                   th:class="${#fields.hasErrors('password')} ? 'field-error'">
             <div class="help-text">Password will be encrypted for security</div>
+            <div th:if="${#fields.hasErrors('password')}" class="error-message" th:errors="*{password}"></div>
         </div>
 
         <div class="form-group">
             <label for="firstName" class="required">First Name:</label>
             <input type="text" id="firstName" th:field="*{firstName}" required
-                   placeholder="Enter first name">
+                   placeholder="Enter first name"
+                   th:class="${#fields.hasErrors('firstName')} ? 'field-error'">
+            <div th:if="${#fields.hasErrors('firstName')}" class="error-message" th:errors="*{firstName}"></div>
         </div>
 
         <div class="form-group">
             <label for="lastName" class="required">Last Name:</label>
             <input type="text" id="lastName" th:field="*{lastName}" required
-                   placeholder="Enter last name">
+                   placeholder="Enter last name"
+                   th:class="${#fields.hasErrors('lastName')} ? 'field-error'">
+            <div th:if="${#fields.hasErrors('lastName')}" class="error-message" th:errors="*{lastName}"></div>
         </div>
 
         <div class="form-group">
             <label for="email" class="required">Email:</label>
             <input type="email" id="email" th:field="*{email}" required
-                   placeholder="Enter email address">
+                   placeholder="Enter email address"
+                   th:class="${#fields.hasErrors('email')} ? 'field-error'">
             <div class="help-text">Email must be unique</div>
+            <div th:if="${#fields.hasErrors('email')}" class="error-message" th:errors="*{email}"></div>
         </div>
 
         <div class="form-group">
             <label for="age">Age:</label>
             <input type="number" id="age" th:field="*{age}" min="1" max="120"
-                   placeholder="Enter age (optional)">
+                   placeholder="Enter age (optional)"
+                   th:class="${#fields.hasErrors('age')} ? 'field-error'">
+            <div th:if="${#fields.hasErrors('age')}" class="error-message" th:errors="*{age}"></div>
         </div>
 
         <div class="form-group">
-            <label>Roles:</label>
+            <label class="required">Roles:</label>
             <div class="checkbox-group">
                 <div th:each="role : ${allRoles}" class="checkbox-item">
-                    <input type="checkbox" th:id="${'role_' + role.id}" th:value="${role.id}"
-                           th:name="roles" th:checked="${role.name == 'ROLE_USER'}">
+                    <input type="checkbox"
+                           th:id="${'role_' + role.id}"
+                           th:value="${role.id}"
+                           th:field="*{roleIds}">
                     <label th:for="${'role_' + role.id}" th:text="${role.name}">ROLE</label>
                 </div>
             </div>
             <div class="help-text">Select at least one role for the user</div>
+            <div th:if="${#fields.hasErrors('roleIds')}" class="error-message" th:errors="*{roleIds}"></div>
         </div>
 
         <div class="form-actions">
@@ -101,5 +122,56 @@
         </ul>
     </div>
 </div>
+
+<script>
+    // Валидация формы на стороне клиента
+    document.querySelector('form').addEventListener('submit', function(e) {
+        const username = document.getElementById('username').value.trim();
+        const password = document.getElementById('password').value;
+        const firstName = document.getElementById('firstName').value.trim();
+        const lastName = document.getElementById('lastName').value.trim();
+        const email = document.getElementById('email').value.trim();
+        const roleCheckboxes = document.querySelectorAll('input[name="roleIds"]:checked');
+
+        let isValid = true;
+
+        // Проверка обязательных полей
+        if (!username) {
+            alert('Username is required');
+            isValid = false;
+        } else if (!password) {
+            alert('Password is required');
+            isValid = false;
+        } else if (!firstName) {
+            alert('First name is required');
+            isValid = false;
+        } else if (!lastName) {
+            alert('Last name is required');
+            isValid = false;
+        } else if (!email) {
+            alert('Email is required');
+            isValid = false;
+        } else if (roleCheckboxes.length === 0) {
+            alert('At least one role must be selected');
+            isValid = false;
+        }
+
+        if (!isValid) {
+            e.preventDefault();
+        }
+    });
+
+    // Авто-скрытие алертов через 5 секунд
+    setTimeout(function() {
+        const alerts = document.querySelectorAll('.alert');
+        alerts.forEach(function(alert) {
+            alert.style.opacity = '0';
+            alert.style.transition = 'opacity 0.5s';
+            setTimeout(function() {
+                alert.style.display = 'none';
+            }, 500);
+        });
+    }, 5000);
+</script>
 </body>
 </html>

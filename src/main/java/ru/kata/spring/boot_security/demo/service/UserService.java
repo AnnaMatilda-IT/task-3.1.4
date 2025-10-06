@@ -9,6 +9,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import ru.kata.spring.boot_security.demo.dao.RoleRepository;
 import ru.kata.spring.boot_security.demo.dao.UserRepository;
+import ru.kata.spring.boot_security.demo.dto.UserCreateDto;
+import ru.kata.spring.boot_security.demo.exception.UserNotFoundException;
 import ru.kata.spring.boot_security.demo.model.Role;
 import ru.kata.spring.boot_security.demo.model.User;
 
@@ -19,25 +21,27 @@ import java.util.Set;
 @Service
 @Transactional
 public class UserService implements UserDetailsService {
+    //UserDetailsService - интерфейс Spring Security для загрузки пользователей
+
     private final UserRepository userRepository;
-    private final RoleRepository roleRepository;
+    private final RoleService roleService;
     private final PasswordEncoder passwordEncoder;
 
     @Autowired
-    public UserService(UserRepository userRepository, RoleRepository roleRepository, PasswordEncoder passwordEncoder) {
+    public UserService(UserRepository userRepository, RoleService roleService, PasswordEncoder passwordEncoder) {
         this.userRepository = userRepository;
-        this.roleRepository = roleRepository;
+        this.roleService = roleService;
         this.passwordEncoder = passwordEncoder;
     }
 
     public void initializeRoles() {
         // Создаем роли только если они не существуют
-        if (roleRepository.findByName("ROLE_ADMIN") == null) {
-            roleRepository.save(new Role("ROLE_ADMIN"));
+        if (roleService.findByName("ROLE_ADMIN") == null) {
+            roleService.saveRole(new Role("ROLE_ADMIN"));
             System.out.println("ROLE_ADMIN created");
         }
-        if (roleRepository.findByName("ROLE_USER") == null) {
-            roleRepository.save(new Role("ROLE_USER"));
+        if (roleService.findByName("ROLE_USER") == null) {
+            roleService.saveRole(new Role("ROLE_USER"));
             System.out.println("ROLE_USER created");
         }
     }
@@ -45,6 +49,7 @@ public class UserService implements UserDetailsService {
     @Override
     @Transactional(readOnly = true)
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
+        //загружает пользователя по имени для аутентификации
         User user = userRepository.findByUsername(username);
         if (user == null) {
             throw new UsernameNotFoundException("User not found");
@@ -53,7 +58,6 @@ public class UserService implements UserDetailsService {
         return user;
     }
 
-    // CRUD-методы автоматически предоставляются JpaRepository
     @Transactional(readOnly = true)
     public List<User> getAllUsers() {
         return userRepository.findAll();
@@ -61,10 +65,39 @@ public class UserService implements UserDetailsService {
 
     @Transactional(readOnly = true)
     public User getUserById(Long id) {
-        return userRepository.findById(id).orElse(null);
+        return userRepository.findById(id).orElseThrow(() -> new UserNotFoundException(id));
     }
 
+    public void saveUser(UserCreateDto userDto) {
+        //метод сохраняет пользователя с массивом ID ролей
+        // Проверка уникальности
+        if (userRepository.existsByUsername(userDto.getUsername())) {
+            throw new RuntimeException("Username already exists: " + userDto.getUsername());
+        }
+        if (userRepository.existsByEmail(userDto.getEmail())) {
+            throw new RuntimeException("Email already exists: " + userDto.getEmail());
+        }
+
+        // Создаем нового пользователя
+        User user = new User();
+        user.setUsername(userDto.getUsername());
+        user.setPassword(passwordEncoder.encode(userDto.getPassword()));
+        user.setFirstName(userDto.getFirstName());
+        user.setLastName(userDto.getLastName());
+        user.setEmail(userDto.getEmail());
+        user.setAge(userDto.getAge());
+
+        // Получаем роли по ID через RoleService
+        Set<Role> roles = roleService.getRolesByIds(userDto.getRoleIds());
+        user.setRoles(roles);
+
+        userRepository.save(user);
+    }
+
+
+    @Deprecated
     public void saveUser(User user) {
+        //оставляем для обратной совместимости, но помечаем как deprecated
         if (userRepository.existsByUsername(user.getUsername())) {
             throw new RuntimeException("Username already exists: " + user.getUsername());
         }
@@ -72,7 +105,7 @@ public class UserService implements UserDetailsService {
             throw new RuntimeException("Email already exists: " + user.getEmail());
         }
 
-        // Кодируем пароль
+        // Кодируем пароль перед сохранением
         user.setPassword(passwordEncoder.encode(user.getPassword()));
 
         // Убеждаемся, что роли являются управляемыми сущностями
@@ -80,39 +113,49 @@ public class UserService implements UserDetailsService {
             Set<Role> managedRoles = new HashSet<>();
             for (Role role : user.getRoles()) {
                 // Находим роль в базе данных
-                Role managedRole = roleRepository.findByName(role.getName());
+                Role managedRole = roleService.findByName(role.getName());
                 if (managedRole != null) {
                     managedRoles.add(managedRole);
                 } else {
                     // Если роли нет в базе, сохраняем ее
-                    managedRole = roleRepository.save(role);
+                    managedRole = roleService.saveRole(role);
                     managedRoles.add(managedRole);
                 }
             }
-            user.setRoles(managedRoles);
+            user.setRoles(managedRoles); //Заменяем переданные роли на управляемые сущности из БД
         }
 
         userRepository.save(user);
     }
 
-    public void updateUser(User user) {
-        User existingUser = getUserById(user.getId());
-        if (existingUser != null) {
-            if (!existingUser.getUsername().equals(user.getUsername()) &&
-                    userRepository.existsByUsername(user.getUsername())) {
-                throw new RuntimeException("Username already exists: " + user.getUsername());
-            }
-            if (!existingUser.getEmail().equals(user.getEmail()) &&
-                    userRepository.existsByEmail(user.getEmail())) {
-                throw new RuntimeException("Email already exists: " + user.getEmail());
-            }
-            if (user.getPassword() == null || user.getPassword().isEmpty()) {
-                user.setPassword(existingUser.getPassword());
-            } else {
-                user.setPassword(passwordEncoder.encode(user.getPassword()));
-            }
-            userRepository.save(user);
+    public void updateUser(UserCreateDto userDto, Long userId) {
+        User existingUser = getUserById(userId);
+        if (!existingUser.getUsername().equals(userDto.getUsername()) &&
+                userRepository.existsByUsername(userDto.getUsername())) {
+            throw new RuntimeException("Username already exists: " + userDto.getUsername());
         }
+        if (!existingUser.getEmail().equals(userDto.getEmail()) &&
+                userRepository.existsByEmail(userDto.getEmail())) {
+            throw new RuntimeException("Email already exists: " + userDto.getEmail());
+        }
+
+        // Обновляем поля
+        existingUser.setUsername(userDto.getUsername());
+        existingUser.setFirstName(userDto.getFirstName());
+        existingUser.setLastName(userDto.getLastName());
+        existingUser.setEmail(userDto.getEmail());
+        existingUser.setAge(userDto.getAge());
+
+        // Обновляем пароль, если указан новый
+        if (userDto.getPassword() != null && !userDto.getPassword().isEmpty()) {
+            existingUser.setPassword(passwordEncoder.encode(userDto.getPassword()));
+        }
+
+        // Обновляем роли через RoleService
+        Set<Role> roles = roleService.getRolesByIds(userDto.getRoleIds());
+        existingUser.setRoles(roles);
+
+        userRepository.save(existingUser);
     }
 
     public void deleteUser(Long id) {
@@ -120,10 +163,5 @@ public class UserService implements UserDetailsService {
         if (user != null) {
             userRepository.delete(user);
         }
-    }
-
-    @Transactional(readOnly = true)
-    public List<Role> getAllRoles() {
-        return roleRepository.findAll();
     }
 }

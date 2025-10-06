@@ -21,8 +21,9 @@ public class UserController {
 
     @GetMapping
     public String userPage(Model model) {
+        //SecurityContextHolder - хранит информацию о безопасности текущего потока
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        User user = (User) authentication.getPrincipal();
+        User user = (User) authentication.getPrincipal();//возвращает аутентифицированного пользователя
         model.addAttribute("user", user);
         return "user";
     }

@@ -12,12 +12,16 @@ import java.util.Set;
 
 @Component
 public class SuccessUserHandler implements AuthenticationSuccessHandler {
+    //обработчик успешной аутентификации
     @Override
     public void onAuthenticationSuccess(HttpServletRequest httpServletRequest,
                                         HttpServletResponse httpServletResponse,
                                         Authentication authentication) throws IOException {
+        //AuthorityUtils.authorityListToSet() - преобразует authorities в Set строк
+        //Authentication - содержит информацию об аутентифицированном пользователе
         Set<String> roles = AuthorityUtils.authorityListToSet(authentication.getAuthorities());
 
+        //перенаправляет пользователя на нужную страницу в зависимости от роли
         if (roles.contains("ROLE_ADMIN")) {
             httpServletResponse.sendRedirect("/admin");
         } else if (roles.contains("ROLE_USER")) {

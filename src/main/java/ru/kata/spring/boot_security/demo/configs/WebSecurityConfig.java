@@ -11,6 +11,8 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 @Configuration
 @EnableWebSecurity
 public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
+    //основная конфигурация безопасности
+    //WebSecurityConfigurerAdapter - базовый класс для настройки безопасности
     private final SuccessUserHandler successUserHandler;
 
     public WebSecurityConfig(SuccessUserHandler successUserHandler) {
@@ -20,13 +22,14 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
     @Override
     protected void configure(HttpSecurity http) throws Exception {
         http
-                    .authorizeRequests()
-                    .antMatchers("/", "/index").permitAll()
-                    .antMatchers("/admin/**").hasRole("ADMIN")
-                    .antMatchers("/user/**").hasAnyRole("USER", "ADMIN")
+                .authorizeRequests() //начало настройки авторизации
+                    .antMatchers("/", "/index")// определяет шаблоны URL и требования доступа к ним
+                    .permitAll()//разрешает доступ всем
+                    .antMatchers("/admin/**").hasRole("ADMIN")//требует определенную роль
+                    .antMatchers("/user/**").hasAnyRole("USER", "ADMIN")//требует одну из ролей
                     .anyRequest().authenticated()
                     .and()
-                .formLogin()
+                .formLogin()//Настраивает форму входа(Разрешает доступ к странице логина всем)
                     .loginPage("/login")
                     .successHandler(successUserHandler)
                     .permitAll()
@@ -36,7 +39,7 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
                     .permitAll();
     }
 
-    // аутентификация inMemory
+    // бин для кодирования паролей using BCrypt
     @Bean
     public PasswordEncoder passwordEncoder() {
         return new BCryptPasswordEncoder();

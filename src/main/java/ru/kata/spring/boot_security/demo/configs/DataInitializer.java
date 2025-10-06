@@ -6,8 +6,10 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
 import ru.kata.spring.boot_security.demo.dao.RoleRepository;
 import ru.kata.spring.boot_security.demo.dao.UserRepository;
+import ru.kata.spring.boot_security.demo.dto.UserCreateDto;
 import ru.kata.spring.boot_security.demo.model.Role;
 import ru.kata.spring.boot_security.demo.model.User;
+import ru.kata.spring.boot_security.demo.service.RoleService;
 import ru.kata.spring.boot_security.demo.service.UserService;
 
 import java.util.HashSet;
@@ -16,60 +18,56 @@ import java.util.Set;
 @Component
 public class DataInitializer implements CommandLineRunner {
     private final UserRepository userRepository;
-    private final RoleRepository roleRepository;
+    private final RoleService roleService;
     private final UserService userService;
 
     @Autowired
-    public DataInitializer(UserRepository userRepository, RoleRepository roleRepository,
+    public DataInitializer(UserRepository userRepository, RoleService roleService,
                            UserService userService) {
         this.userRepository = userRepository;
-        this.roleRepository = roleRepository;
+        this.roleService = roleService;
         this.userService = userService;
     }
 
     @Override
     public void run(String... args) throws Exception {
-        // Инициализируем роли через UserService
+        // метод выполняется после запуска приложения
+        // Инициализируем роли через UserService и получаем на них ссылки
         userService.initializeRoles();
 
         // Получаем роли из базы данных
-        Role adminRole = roleRepository.findByName("ROLE_ADMIN");
-        Role userRole = roleRepository.findByName("ROLE_USER");
+        Role adminRole = roleService.findByName("ROLE_ADMIN");
+        Role userRole = roleService.findByName("ROLE_USER");
 
-        // Создаем админа, если его нет
+
+        // Создаем админа с использованием DTO
         if (userRepository.findByUsername("admin") == null) {
-            User admin = new User();
-            admin.setUsername("admin");
-            admin.setPassword("admin");
-            admin.setFirstName("Admin");
-            admin.setLastName("Adminov");
-            admin.setEmail("admin@mail.ru");
-            admin.setAge(30);
+            UserCreateDto adminDto = new UserCreateDto();
+            adminDto.setUsername("admin");
+            adminDto.setPassword("admin");
+            adminDto.setFirstName("Admin");
+            adminDto.setLastName("Adminov");
+            adminDto.setEmail("admin@mail.ru");
+            adminDto.setAge(30);
+            adminDto.setRoleIds(new Long[]{adminRole.getId(), userRole.getId()});
 
-            Set<Role> adminRoles = new HashSet<>();
-            adminRoles.add(adminRole); // Используем существующую роль
-            adminRoles.add(userRole);  // Используем существующую роль
-            admin.setRoles(adminRoles);
-
-            userService.saveUser(admin);
+            userService.saveUser(adminDto);
         }
 
-            // Создаем обычного пользователя, если его нет
+            // Создаем обычного пользователя с использованием DTO
         if (userRepository.findByUsername("user") == null) {
-            User user = new User();
-            user.setUsername("user");
-            user.setPassword("user");
-            user.setFirstName("User");
-            user.setLastName("Userov");
-            user.setEmail("user@mail.ru");
-            user.setAge(25);
+            UserCreateDto userDto = new UserCreateDto();
+            userDto.setUsername("user");
+            userDto.setPassword("user");
+            userDto.setFirstName("User");
+            userDto.setLastName("Userov");
+            userDto.setEmail("user@mail.ru");
+            userDto.setAge(25);
+            userDto.setRoleIds(new Long[]{userRole.getId()});
 
-            Set<Role> userRoles = new HashSet<>();
-            userRoles.add(userRole); // Используем существующую роль
-            user.setRoles(userRoles);
-
-            userService.saveUser(user);
+            userService.saveUser(userDto);
         }
+
         System.out.println("Test users created:");
         System.out.println("Admin: admin / admin");
         System.out.println("User: user / user");

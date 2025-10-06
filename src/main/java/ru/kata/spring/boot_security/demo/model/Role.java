@@ -8,6 +8,7 @@ import java.util.Objects;
 @Entity
 @Table(name = "roles")
 public class Role implements GrantedAuthority {
+    //GrantedAuthority - интерфейс Spring Security для ролей/прав
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
@@ -26,6 +27,7 @@ public class Role implements GrantedAuthority {
     public String getName() { return name; }
     public void setName(String name) { this.name = name; }
 
+    //Требуется Spring Security - возвращает имя роли как authority
     @Override
     public String getAuthority() {
         return name;
