@@ -94,40 +94,6 @@ public class UserService implements UserDetailsService {
         userRepository.save(user);
     }
 
-
-    @Deprecated
-    public void saveUser(User user) {
-        //оставляем для обратной совместимости, но помечаем как deprecated
-        if (userRepository.existsByUsername(user.getUsername())) {
-            throw new RuntimeException("Username already exists: " + user.getUsername());
-        }
-        if (userRepository.existsByEmail(user.getEmail())) {
-            throw new RuntimeException("Email already exists: " + user.getEmail());
-        }
-
-        // Кодируем пароль перед сохранением
-        user.setPassword(passwordEncoder.encode(user.getPassword()));
-
-        // Убеждаемся, что роли являются управляемыми сущностями
-        if (user.getRoles() != null) {
-            Set<Role> managedRoles = new HashSet<>();
-            for (Role role : user.getRoles()) {
-                // Находим роль в базе данных
-                Role managedRole = roleService.findByName(role.getName());
-                if (managedRole != null) {
-                    managedRoles.add(managedRole);
-                } else {
-                    // Если роли нет в базе, сохраняем ее
-                    managedRole = roleService.saveRole(role);
-                    managedRoles.add(managedRole);
-                }
-            }
-            user.setRoles(managedRoles); //Заменяем переданные роли на управляемые сущности из БД
-        }
-
-        userRepository.save(user);
-    }
-
     public void updateUser(UserCreateDto userDto, Long userId) {
         User existingUser = getUserById(userId);
         if (!existingUser.getUsername().equals(userDto.getUsername()) &&
@@ -159,9 +125,6 @@ public class UserService implements UserDetailsService {
     }
 
     public void deleteUser(Long id) {
-        User user = getUserById(id);
-        if (user != null) {
-            userRepository.delete(user);
-        }
+        userRepository.delete(getUserById(id));
     }
 }
