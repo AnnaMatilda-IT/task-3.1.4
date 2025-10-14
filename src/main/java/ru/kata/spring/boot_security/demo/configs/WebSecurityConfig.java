@@ -23,7 +23,7 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
     protected void configure(HttpSecurity http) throws Exception {
         http
                 .authorizeRequests() //начало настройки авторизации
-                    .antMatchers("/", "/index")// определяет шаблоны URL и требования доступа к ним
+                    .antMatchers("/login")// определяет шаблоны URL и требования доступа к ним
                     .permitAll()//разрешает доступ всем
                     .antMatchers("/admin/**").hasRole("ADMIN")//требует определенную роль
                     .antMatchers("/user/**").hasAnyRole("USER", "ADMIN")//требует одну из ролей

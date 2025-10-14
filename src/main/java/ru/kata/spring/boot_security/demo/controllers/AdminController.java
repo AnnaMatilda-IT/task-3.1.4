@@ -4,14 +4,14 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 import ru.kata.spring.boot_security.demo.dto.UserCreateDto;
-import ru.kata.spring.boot_security.demo.model.Role;
-import ru.kata.spring.boot_security.demo.model.User;
+import ru.kata.spring.boot_security.demo.exception.UserNotFoundException;
 import ru.kata.spring.boot_security.demo.service.RoleService;
 import ru.kata.spring.boot_security.demo.service.UserService;
 
 @Controller
-@RequestMapping("/admin") //задаем базовый URL для всех методов контроллера админа
+@RequestMapping("/admin")
 public class AdminController {
     private final UserService userService;
     private final RoleService roleService;
@@ -26,6 +26,7 @@ public class AdminController {
     public String adminPage(Model model) {
         model.addAttribute("users", userService.getAllUsers());
         model.addAttribute("allRoles", roleService.getAllRoles());
+        model.addAttribute("userDto", new UserCreateDto());
         return "admin";
     }
 
@@ -37,49 +38,41 @@ public class AdminController {
     }
 
     @PostMapping("/add")
-    public String addUser(@ModelAttribute UserCreateDto userDto) {
-        userService.saveUser(userDto);
-        return "redirect:/admin";
-    }
-
-    @GetMapping("/edit/{id}")
-    public String showEditUserForm(@PathVariable Long id, Model model) {
-        //@PathVariable - извлекает значение из URL
-        User user = userService.getUserById(id);
-        if (user != null) {
-            // Создаем DTO из существующего пользователя
-            UserCreateDto userDto = new UserCreateDto();
-            userDto.setUsername(user.getUsername());
-            userDto.setFirstName(user.getFirstName());
-            userDto.setLastName(user.getLastName());
-            userDto.setEmail(user.getEmail());
-            userDto.setAge(user.getAge());
-
-            // Получаем ID ролей пользователя
-            Long[] roleIds = user.getRoles().stream()
-                    .map(Role::getId)
-                    .toArray(Long[]::new);
-            userDto.setRoleIds(roleIds);
-
-            model.addAttribute("userDto", userDto);
-            model.addAttribute("userId", id); // Передаем ID отдельно
-            model.addAttribute("allRoles", roleService.getAllRoles());
-            return "edit-user";
-        } else {
-            return "redirect:/admin?error=user_not_found";
+    public String addUser(@ModelAttribute UserCreateDto userDto,
+                          RedirectAttributes redirectAttributes)
+    {
+        try {
+            userService.saveUser(userDto);
+            redirectAttributes.addFlashAttribute("successMessage", "User added successfully!");
+        } catch (RuntimeException e) {
+            redirectAttributes.addFlashAttribute("errorMessage", e.getMessage());
         }
+        return "redirect:/admin";
     }
 
     @PostMapping("/edit")
     public String updateUser(@ModelAttribute UserCreateDto userDto,
-                             @RequestParam("userId") Long userId) {
-        userService.updateUser(userDto, userId);
+                             @RequestParam("userId") Long userId,
+                             RedirectAttributes redirectAttributes) {
+        try {
+            userService.updateUser(userDto, userId);
+            redirectAttributes.addFlashAttribute("successMessage", "User updated successfully!");
+        } catch (RuntimeException e) {
+            redirectAttributes.addFlashAttribute("errorMessage", e.getMessage());
+        }
         return "redirect:/admin";
     }
 
     @PostMapping("/delete/{id}")
-    public String deleteUser(@PathVariable Long id) {
-        userService.deleteUser(id);
+    public String deleteUser(@PathVariable Long id, RedirectAttributes redirectAttributes) {
+        try {
+            userService.deleteUser(id);
+            redirectAttributes.addFlashAttribute("successMessage", "User deleted successfully!");
+        } catch (UserNotFoundException e) {
+            redirectAttributes.addFlashAttribute("errorMessage", "User not found!");
+        } catch (RuntimeException e) {
+            redirectAttributes.addFlashAttribute("errorMessage", e.getMessage());
+        }
         return "redirect:/admin";
     }
 }

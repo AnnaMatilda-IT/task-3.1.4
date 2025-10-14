@@ -28,10 +28,6 @@
         Invalid username and password.
     </div>
 
-    <div th:if="${param.logout}" class="alert alert-success">
-        You have been logged out successfully.
-    </div>
-
     <form th:action="@{/login}" method="post">
         <div class="form-group">
             <label for="username">Username:</label>
@@ -48,13 +44,6 @@
         </div>
     </form>
 
-    <a th:href="@{/}" class="back-link">Back to Home Page</a>
-
-    <div style="margin-top: 30px; padding: 15px; background: #f8f9fa; border-radius: 4px; font-size: 14px;">
-        <strong>Test Accounts:</strong><br>
-        Admin: admin / admin<br>
-        User: user / user
-    </div>
 </div>
 </body>
 </html>
