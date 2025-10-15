@@ -25,6 +25,9 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
                 .authorizeRequests() //начало настройки авторизации
                     .antMatchers("/login")// определяет шаблоны URL и требования доступа к ним
                     .permitAll()//разрешает доступ всем
+                    .antMatchers("/api/users/current").hasAnyRole("USER", "ADMIN")
+                    .antMatchers("/api/roles").hasRole("ADMIN")
+                    .antMatchers("/api/users/**").hasRole("ADMIN")
                     .antMatchers("/admin/**").hasRole("ADMIN")//требует определенную роль
                     .antMatchers("/user/**").hasAnyRole("USER", "ADMIN")//требует одну из ролей
                     .anyRequest().authenticated()
@@ -36,7 +39,9 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
                     .and()
                 .logout()
                     .logoutSuccessUrl("/login?logout")
-                    .permitAll();
+                    .permitAll()
+                .and()
+                .csrf().disable(); // Отключаем CSRF для REST API (в продакшене нужно настроить правильно)
     }
 
     // бин для кодирования паролей using BCrypt
