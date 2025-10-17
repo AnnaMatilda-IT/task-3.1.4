@@ -7,7 +7,6 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 import ru.kata.spring.boot_security.demo.dto.UserCreateDto;
-import ru.kata.spring.boot_security.demo.exception.UserNotFoundException;
 import ru.kata.spring.boot_security.demo.model.User;
 import ru.kata.spring.boot_security.demo.service.RoleService;
 import ru.kata.spring.boot_security.demo.service.UserService;
@@ -32,45 +31,26 @@ public class UserRestController {
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<?> getUserById(@PathVariable Long id) {
-        try {
-            User user = userService.getUserById(id);
-            return ResponseEntity.ok(user);
-        } catch (UserNotFoundException e) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
-        }
+    public ResponseEntity<User> getUserById(@PathVariable Long id) {
+        return ResponseEntity.ok(userService.getUserById(id));
     }
 
     @PostMapping
-    public ResponseEntity<?> createUser(@RequestBody UserCreateDto userDto) {
-        try {
-            userService.saveUser(userDto);
-            return ResponseEntity.status(HttpStatus.CREATED).body("User created successfully");
-        } catch (RuntimeException e) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
-        }
+    public ResponseEntity<String> createUser(@RequestBody UserCreateDto userDto) {
+        userService.saveUser(userDto);
+        return ResponseEntity.status(HttpStatus.CREATED).body("User created successfully");
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<?> updateUser(@PathVariable Long id, @RequestBody UserCreateDto userDto) {
-        try {
-            userService.updateUser(userDto, id);
-            return ResponseEntity.ok("User updated successfully");
-        } catch (RuntimeException e) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
-        }
+    public ResponseEntity<String> updateUser(@PathVariable Long id, @RequestBody UserCreateDto userDto) {
+        userService.updateUser(userDto, id);
+        return ResponseEntity.ok("User updated successfully");
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<?> deleteUser(@PathVariable Long id) {
-        try {
-            userService.deleteUser(id);
-            return ResponseEntity.ok("User deleted successfully");
-        } catch (UserNotFoundException e) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
-        } catch (RuntimeException e) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
-        }
+    public ResponseEntity<String> deleteUser(@PathVariable Long id) {
+        userService.deleteUser(id);
+        return ResponseEntity.ok("User deleted successfully");
     }
 
     @GetMapping("/current")
