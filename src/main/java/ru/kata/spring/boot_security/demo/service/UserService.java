@@ -33,7 +33,6 @@ public class UserService implements UserDetailsService {
     }
 
     public void initializeRoles() {
-        // Создаем роли только если они не существуют
         if (roleService.findByName("ROLE_ADMIN") == null) {
             roleService.saveRole(new Role("ROLE_ADMIN"));
             System.out.println("ROLE_ADMIN created");
@@ -47,7 +46,6 @@ public class UserService implements UserDetailsService {
     @Override
     @Transactional(readOnly = true)
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
-        //загружает пользователя по имени для аутентификации
         User user = userRepository.findByUsername(username);
         if (user == null) {
             throw new UsernameNotFoundException("User not found");
@@ -67,8 +65,6 @@ public class UserService implements UserDetailsService {
     }
 
     public void saveUser(UserCreateDto userDto) {
-        //метод сохраняет пользователя с массивом ID ролей
-        // Проверка уникальности
         if (userRepository.existsByUsername(userDto.getUsername())) {
             throw new RuntimeException("Username already exists: " + userDto.getUsername());
         }
@@ -81,7 +77,6 @@ public class UserService implements UserDetailsService {
         user.setEmail(userDto.getEmail());
         user.setAge(userDto.getAge());
 
-        // Получаем роли по ID через RoleService
         Set<Role> roles = roleService.getRolesByIds(userDto.getRoleIds());
         user.setRoles(roles);
 
@@ -104,10 +99,10 @@ public class UserService implements UserDetailsService {
 
         if (userDto.getPassword() != null && !userDto.getPassword().isEmpty()) {
             existingUser.setPassword(passwordEncoder.encode(userDto.getPassword()));
-        } // Обновили пароль, если указан новый
+        }
 
         Set<Role> roles = roleService.getRolesByIds(userDto.getRoleIds());
-        existingUser.setRoles(roles); // Обновляем роли через RoleService
+        existingUser.setRoles(roles);
 
         userRepository.save(existingUser);
     }
